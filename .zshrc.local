@@ -1,0 +1,26 @@
+eval "$(/opt/homebrew/bin/brew shellenv)"
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+
+export PATH="$JAVA_HOME/bin:$PATH"
+
+export LESS=FRX
+
+function runDockerScratch() {
+  local NAME=$1
+  local AUTH="-e POSTGRESQL_USER='' -e POSTGRESQL_PASSWORD='' -e POSTGRESQL_DATABASE='db'"
+  if [ -z "$NAME" ]; then
+    NAME="postgresScratch"
+  fi
+  eval "docker run --name $NAME --platform linux/amd64 -m 8G $AUTH --rm -h myhost <IMAGE>" > ~/Docker_"$NAME"_log.txt 2>&1 &
+  local PID="$!"
+  local PS_OUTPUT="$(ps -p $PID | grep $PID)"
+
+  echo "Waiting for the container to initialize...."
+  while [[ -z "$(grep "database system is ready to accept connections" ~/Docker_postgresScratch_log.txt)" && -n "$PS_OUTPUT" ]]; do
+    PS_OUTPUT="$(ps -p $PID | grep $PID)"
+    sleep 0.1;
+  done
+  docker exec -it $NAME /bin/bash -c psql
+  docker kill $NAME
+}
+

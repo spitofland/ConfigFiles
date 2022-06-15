@@ -1,0 +1,25 @@
+[alias]
+	# List the aliases
+	aliases = !git config --get-regexp alias | sort | grep --color "^alias\\.\\[^\\[:space:\\]\\]*"
+	amend = commit --amend
+	br = branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate
+
+	# List local branches without a remote upstream
+	br-local-only = !git branch --format \"%(refname:short) %(upstream)\" | grep -v "/"
+	cdiff = diff --cached
+	co = checkout
+	ff = pull -p --ff-only
+	graph = log --graph --date-order --pretty=format:\"%C(yellow)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) [%an]\" --abbrev-commit
+	lg = log --pretty=format:\"%C(yellow)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) [%an]\" --abbrev-commit
+
+	# Pull the "from" branch so that it is up-to-date before merging from it
+	upMerge = "!f() { local FROM_BRANCH=\"$1\"; local TO_BRANCH=$(git branch | grep '^\\*' | sed -e 's/^* //'); git co $FROM_BRANCH && git ff && git co $TO_BRANCH && git merge $FROM_BRANCH; }; f"
+	stat = status
+	unstage = reset HEAD --
+	hide = update-index --assume-unchanged
+	unhide = update-index --no-assume-unchanged
+	hidden = !git ls-files -v | grep "^[[:lower:]]"
+
+	# This is for running git operations that conflict with changes in hidden files
+	# It unhides the files, stashes the changes, performs the git operation, then restores the stashed changes and hides the files again
+	on-hidden = "!f() { local CMD=\"${@}\"; echo \"Hidden Files:\"; git hidden | sed -e 's/^. /- /'; echo; local FILES=$(git hidden | sed -e 's/^. //'); FILES=\"\\\"${FILES//$'\\n'/\\\" \\\"}\\\"\"; echo "$FILES"; eval \"git update-index --no-assume-unchanged $FILES\"; eval \"git stash push -m \\\"Storing hidden files\\\" $FILES\"; eval \"git $CMD\"; eval \"git stash pop\"; eval \"git update-index --assume-unchanged $FILES\"; }; f"
