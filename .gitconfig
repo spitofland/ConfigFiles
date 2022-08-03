@@ -5,10 +5,17 @@
 	br = branch --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(contents:subject) %(color:green)(%(committerdate:relative)) [%(authorname)]' --sort=-committerdate
 
 	# List local branches without a remote upstream
-	br-local-only = !git branch --format \"%(refname:short) %(upstream)\" | grep -v "/"
+	br-local-only = !git branch --format \"%(refname:short) %(upstream:track)\" | grep \"\\[gone\\]\"
+	del-local-only = !git br-local-only | cut -w -f 1 | xargs git br -D
 	cdiff = diff --cached
+
+	# List only files and changes that match a grep search with the provided arguments
+	diff-filtered = "!f() { git diff -U0 | grep -v -E '^(index |--- |\\+\\+\\+ |@@ )' | grep $@ | grep -B 1 -v '^diff --git '; }; f"
+	cdiff-filtered = "!f() { git cdiff -U0 | grep -v -E '^(index |--- |\\+\\+\\+ |@@ )' | grep $@ | grep -B 1 -v '^diff --git '; }; f"
+
 	co = checkout
 	ff = pull -p --ff-only
+	ff-other = "!f() { local BRANCH=\"$1\"; local RETURN_BRANCH=$(git branch | grep '^\\*' | sed -e 's/^* //'); git co $BRANCH && git ff; git co $RETURN_BRANCH; }; f"
 	graph = log --graph --date-order --pretty=format:\"%C(yellow)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) [%an]\" --abbrev-commit
 	lg = log --pretty=format:\"%C(yellow)%h%Creset -%C(red)%d%Creset %s %C(green)(%cr) [%an]\" --abbrev-commit
 
