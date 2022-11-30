@@ -1,5 +1,6 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+export M2_HOME=/opt/homebrew/Cellar/maven/3.8.5/libexec
 
 export PATH="$JAVA_HOME/bin:$PATH"
 
@@ -22,5 +23,29 @@ function runDockerScratch() {
   done
   docker exec -it $NAME /bin/bash -c psql
   docker kill $NAME
+}
+
+
+# If no filename is given the next available name from the pattern log1.txt, log2.txt, ... is used
+function tee_log () {
+  local FILE="$1"
+  if [ -z "$FILE" ]; then
+    local I=1
+    while [ -f "log$I.txt" ]; then
+      I=$(($I + 1))
+      if [ $I -le 1 ]; then
+        I=1
+        echo "ERROR: Rollover occurred. Overwriting log$I.txt"
+        break
+      fi
+    done
+    FILE="log$I.txt"
+  fi
+  echo -n "" > "$FILE" # Create or overwrite the file
+
+  while read data; do
+    echo "[$(date +"%Y-%m-%d %H:%M:%S %Z")] $data" >> "$FILE"
+    echo "$data"
+  done
 }
 
