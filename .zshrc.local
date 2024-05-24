@@ -30,16 +30,16 @@ function runDockerScratch() {
 function tee_log () {
   local FILE="$1"
   if [ -z "$FILE" ]; then
-    local I=1
-    while [ -f "log$I.txt" ]; then
-      I=$(($I + 1))
-      if [ $I -le 1 ]; then
-        I=1
-        echo "ERROR: Rollover occurred. Overwriting log$I.txt"
+    local COUNT=1
+    while [ -f "log$COUNT.txt" ]; do
+      (( COUNT ++ ))
+      if [ $COUNT -le 1 ]; then
+        COUNT=1
+        echo "ERROR (tee_log): Rollover occurred. Overwriting log$COUNT.txt"
         break
       fi
     done
-    FILE="log$I.txt"
+    FILE="log$COUNT.txt"
   fi
   echo -n "" > "$FILE" # Create or overwrite the file
 
@@ -49,3 +49,8 @@ function tee_log () {
   done
 }
 
+# Delete log files in the current directory
+function rmlogs () {
+  echo -n "Deleting $(ls | grep -c "log[0-9]*.txt") log files ... "
+  [ "$(ls | grep -c "log[0-9]*.txt")" -gt "0" ] && rm "${(f)$(ls | grep "log[0-9]*.txt")}" && echo "Success" || echo "Failed"
+}
